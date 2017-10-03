@@ -1,10 +1,11 @@
 # frozen_string_literal: true
 module KubernetesDeploy
   class Service < KubernetesResource
+    PRUNABLE = true
     TIMEOUT = 7.minutes
 
     def sync
-      _, _err, st = kubectl.run("get", type, @name)
+      _, _err, st = kubectl.run("get", kind, @name)
       @found = st.success?
       @related_deployment_replicas = fetch_related_replica_count
       @num_pods_selected = fetch_related_pod_count

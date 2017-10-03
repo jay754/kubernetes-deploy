@@ -2,10 +2,13 @@
 module KubernetesDeploy
   class Memcached < KubernetesResource
     TIMEOUT = 5.minutes
+    PREDEPLOY = true
     CONFIGMAP_NAME = "memcached-url"
+    GROUP = 'stable.shopify.io'
+    VERSION = 'v1'
 
     def sync
-      _, _err, st = kubectl.run("get", type, @name)
+      _, _err, st = kubectl.run("get", kind, @name)
       @found = st.success?
       @deployment_exists = memcached_deployment_exists?
       @service_exists = memcached_service_exists?

@@ -5,9 +5,10 @@ module KubernetesDeploy
     REQUIRED_ROLLOUT_ANNOTATION = 'kubernetes-deploy.shopify.io/required-rollout'
     REQUIRED_ROLLOUT_TYPES = %w(maxUnavailable full none).freeze
     DEFAULT_REQUIRED_ROLLOUT = 'full'
+    PRUNABLE = true
 
     def sync
-      raw_json, _err, st = kubectl.run("get", type, @name, "--output=json")
+      raw_json, _err, st = kubectl.run("get", kind, @name, "--output=json")
       @found = st.success?
 
       if @found
@@ -79,7 +80,7 @@ module KubernetesDeploy
       reason_msg = if @progress_condition.present?
         "Timeout reason: #{@progress_condition['reason']}"
       else
-        "Timeout reason: hard deadline for #{type}"
+        "Timeout reason: hard deadline for #{kind}"
       end
       return reason_msg unless @latest_rs.present?
       "#{reason_msg}\nLatest ReplicaSet: #{@latest_rs.name}\n\n#{@latest_rs.timeout_message}"

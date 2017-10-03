@@ -3,10 +3,11 @@ require 'kubernetes-deploy/kubernetes_resource/pod_set_base'
 module KubernetesDeploy
   class DaemonSet < PodSetBase
     TIMEOUT = 5.minutes
+    PRUNABLE = true
     attr_reader :pods
 
     def sync
-      raw_json, _err, st = kubectl.run("get", type, @name, "--output=json")
+      raw_json, _err, st = kubectl.run("get", kind, @name, "--output=json")
       @found = st.success?
 
       if @found

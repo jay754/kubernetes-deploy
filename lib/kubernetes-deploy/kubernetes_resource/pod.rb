@@ -2,7 +2,9 @@
 module KubernetesDeploy
   class Pod < KubernetesResource
     TIMEOUT = 10.minutes
-
+    PREDEPLOY = true
+    PREDEPLOY_DEPENDENCIES = %w(ResourceQuota ServiceAccount ConfigMap PersistentVolumeClaim)
+    PRUNABLE = true
     FAILED_PHASE_NAME = "Failed"
 
     def initialize(namespace:, context:, definition:, logger:, parent: nil, deploy_started_at: nil)
@@ -19,7 +21,7 @@ module KubernetesDeploy
 
     def sync(pod_data = nil)
       if pod_data.blank?
-        raw_json, _err, st = kubectl.run("get", type, @name, "-a", "--output=json")
+        raw_json, _err, st = kubectl.run("get", kind, @name, "-a", "--output=json")
         pod_data = JSON.parse(raw_json) if st.success?
         raise_predates_deploy_error if pod_data.present? && unmanaged? && !deploy_started?
       end

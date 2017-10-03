@@ -2,10 +2,13 @@
 module KubernetesDeploy
   class Redis < KubernetesResource
     TIMEOUT = 5.minutes
+    PREDEPLOY = true
     UUID_ANNOTATION = "redis.stable.shopify.io/owner_uid"
+    GROUP = 'stable.shopify.io'
+    VERSION = 'v1'
 
     def sync
-      _, _err, st = kubectl.run("get", type, @name)
+      _, _err, st = kubectl.run("get", kind, @name)
       @found = st.success?
       @deployment_exists = redis_deployment_exists?
       @service_exists = redis_service_exists?

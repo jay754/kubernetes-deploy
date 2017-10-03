@@ -2,9 +2,10 @@
 module KubernetesDeploy
   class Ingress < KubernetesResource
     TIMEOUT = 30.seconds
+    PRUNABLE = true
 
     def sync
-      _, _err, st = kubectl.run("get", type, @name)
+      _, _err, st = kubectl.run("get", kind, @name)
       @status = st.success? ? "Created" : "Unknown"
       @found = st.success?
     end

@@ -18,7 +18,7 @@ module KubernetesDeploy
 
     def sync(rs_data = nil)
       if rs_data.blank?
-        raw_json, _err, st = kubectl.run("get", type, @name, "--output=json")
+        raw_json, _err, st = kubectl.run("get", kind, @name, "--output=json")
         rs_data = JSON.parse(raw_json) if st.success?
       end
 

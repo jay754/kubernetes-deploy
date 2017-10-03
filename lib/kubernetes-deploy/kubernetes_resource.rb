@@ -7,7 +7,7 @@ require 'kubernetes-deploy/kubectl'
 module KubernetesDeploy
   class KubernetesResource
     attr_reader :name, :namespace, :context
-    attr_writer :type, :deploy_started_at
+    attr_writer :deploy_started_at
 
     TIMEOUT = 5.minutes
     LOG_LINE_COUNT = 250
@@ -28,16 +28,52 @@ module KubernetesDeploy
 
     TIMEOUT_OVERRIDE_ANNOTATION = "kubernetes-deploy.shopify.io/timeout-override"
 
-    def self.build(namespace:, context:, definition:, logger:)
-      opts = { namespace: namespace, context: context, definition: definition, logger: logger }
-      if KubernetesDeploy.const_defined?(definition["kind"])
-        klass = KubernetesDeploy.const_get(definition["kind"])
-        klass.new(**opts)
-      else
-        inst = new(**opts)
-        inst.type = definition["kind"]
-        inst
-      end
+    def self.inherited(child_class)
+      KubernetesResource.child_classes.add(child_class)
+    end
+
+    def self.child_classes
+      @child_classes ||= Set.new
+    end
+
+    def self.all
+      child_classes.dup
+    end
+
+    def self.prunable?
+      self::PRUNABLE if defined? self::PRUNABLE
+    end
+
+    def self.predeploy?
+      self::PREDEPLOY if defined? self::PREDEPLOY
+    end
+
+    def self.predeploy_dependencies
+      self::PREDEPLOY_DEPENDENCIES if defined? self::PREDEPLOY_DEPENDENCIES
+    end
+
+    def self.group
+      self::GROUP
+    end
+
+    def self.version
+      self::VERSION
+    end
+
+    def self.kind
+      name.demodulize
+    end
+
+    def self.qualified_kind
+      "#{group}/#{version}/#{kind}"
+    end
+
+    def kind
+      self.class.kind
+    end
+
+    def id
+      "#{kind}/#{name}"
     end
 
     def self.timeout
@@ -95,10 +131,6 @@ module KubernetesDeploy
       @validation_errors.present?
     end
 
-    def id
-      "#{type}/#{name}"
-    end
-
     def file_path
       file.path
     end
@@ -116,7 +148,7 @@ module KubernetesDeploy
 
     def deploy_succeeded?
       if deploy_started? && !@success_assumption_warning_shown
-        @logger.warn("Don't know how to monitor resources of type #{type}. Assuming #{id} deployed successfully.")
+        @logger.warn("Don't know how to monitor resources of type #{kind}. Assuming #{id} deployed successfully.")
         @success_assumption_warning_shown = true
       end
       true
@@ -128,10 +160,6 @@ module KubernetesDeploy
 
     def status
       @status ||= "Unknown"
-    end
-
-    def type
-      @type || self.class.name.demodulize
     end
 
     def deploy_timed_out?
@@ -212,7 +240,7 @@ module KubernetesDeploy
     # }
     def fetch_events
       return {} unless exists?
-      out, _err, st = kubectl.run("get", "events", "--output=go-template=#{Event.go_template_for(type, name)}")
+      out, _err, st = kubectl.run("get", "events", "--output=go-template=#{Event.go_template_for(kind, name)}")
       return {} unless st.success?
 
       event_collector = Hash.new { |hash, key| hash[key] = [] }
@@ -329,7 +357,7 @@ module KubernetesDeploy
     end
 
     def create_definition_tempfile
-      file = Tempfile.new(["#{type}-#{name}", ".yml"])
+      file = Tempfile.new(["#{kind}-#{name}", ".yml"])
       file.write(YAML.dump(@definition))
       file
     ensure
@@ -350,7 +378,7 @@ module KubernetesDeploy
       else
         "unknown"
       end
-      %W(context:#{context} namespace:#{namespace} resource:#{id} type:#{type} sha:#{ENV['REVISION']} status:#{status})
+      %W(context:#{context} namespace:#{namespace} resource:#{id} type:#{kind} sha:#{ENV['REVISION']} status:#{status})
     end
   end
 end

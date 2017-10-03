@@ -4,7 +4,7 @@ module KubernetesDeploy
     TIMEOUT = 10.seconds
 
     def sync
-      _, _err, st = kubectl.run("get", type, @name)
+      _, _err, st = kubectl.run("get", kind, @name)
       @found = st.success?
       @status = @found ? "Available" : "Unknown"
     end

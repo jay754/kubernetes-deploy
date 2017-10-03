@@ -1,8 +1,11 @@
 # frozen_string_literal: true
 module KubernetesDeploy
   class Statefulservice < KubernetesResource
+    GROUP = 'stable.shopify.io'
+    VERSION = 'v1'
+
     def sync
-      _, _err, st = kubectl.run("get", type, @name)
+      _, _err, st = kubectl.run("get", kind, @name)
       @found = st.success?
     end
 
@@ -10,7 +13,7 @@ module KubernetesDeploy
       return false unless deploy_started?
 
       unless @success_assumption_warning_shown
-        @logger.warn("Don't know how to monitor resources of type #{type}. Assuming #{id} deployed successfully.")
+        @logger.warn("Don't know how to monitor resources of type #{kind}. Assuming #{id} deployed successfully.")
         @success_assumption_warning_shown = true
       end
       true

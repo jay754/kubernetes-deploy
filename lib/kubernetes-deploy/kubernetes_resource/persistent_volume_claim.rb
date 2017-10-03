@@ -2,9 +2,10 @@
 module KubernetesDeploy
   class PersistentVolumeClaim < KubernetesResource
     TIMEOUT = 5.minutes
+    PREDEPLOY = true
 
     def sync
-      out, _err, st = kubectl.run("get", type, @name, "--output=jsonpath={.status.phase}")
+      out, _err, st = kubectl.run("get", kind, @name, "--output=jsonpath={.status.phase}")
       @found = st.success?
       @status = out if @found
     end

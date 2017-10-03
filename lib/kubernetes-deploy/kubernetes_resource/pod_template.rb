@@ -2,7 +2,7 @@
 module KubernetesDeploy
   class PodTemplate < KubernetesResource
     def sync
-      _, _err, st = kubectl.run("get", type, @name)
+      _, _err, st = kubectl.run("get", kind, @name)
       @status = st.success? ? "Available" : "Unknown"
       @found = st.success?
     end

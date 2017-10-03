@@ -2,9 +2,12 @@
 module KubernetesDeploy
   class Cloudsql < KubernetesResource
     TIMEOUT = 10.minutes
+    PREDEPLOY = true
+    GROUP = 'stable.shopify.io'
+    VERSION = 'v1'
 
     def sync
-      _, _err, st = kubectl.run("get", type, @name)
+      _, _err, st = kubectl.run("get", kind, @name)
       @found = st.success?
       @deployment_exists = cloudsql_proxy_deployment_exists?
       @service_exists = mysql_service_exists?

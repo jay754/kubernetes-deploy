@@ -2,10 +2,13 @@
 module KubernetesDeploy
   class Bugsnag < KubernetesResource
     TIMEOUT = 1.minute
+    PREDEPLOY = true
+    GROUP = 'stable.shopify.io'
+    VERSION = 'v1'
 
     def sync
       @secret_found = false
-      _, _err, st = kubectl.run("get", type, @name)
+      _, _err, st = kubectl.run("get", kind, @name)
       @found = st.success?
       if @found
         secrets, _err, _st = kubectl.run("get", "secrets", "--output=name")
