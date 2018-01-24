@@ -62,11 +62,19 @@ module KubernetesDeploy
     # extensions/v1beta1/ReplicaSet -- managed by deployments
     # core/v1/Secret -- should not committed / managed by shipit
     def prune_whitelist
+      @prune_whitelist ||= _build_prune_whitelist
+    end
+
+    def _build_prune_whitelist
       prunable_resources = all_resources.select(&:prunable?)
       prunable_resources.map(&:qualified_kind)
     end
 
     def predeploy_sequence
+      @predeploy_sequence ||= _build_predeploy_sequence
+    end
+
+    def _build_predeploy_sequence
       predeploy_resources = all_resources.select(&:predeploy?)
 
       # Find resources that have explicit predeploy (inter-)dependencies:
@@ -235,6 +243,9 @@ module KubernetesDeploy
     end
 
     def discover_resources
+      # (Lazily) rebuild these lists after discovery if they were present.
+      @predeploy_sequence = nil
+      @prune_whitelist = nil
       DiscoverableResource.discover(context: @context, logger: @logger, server_version: server_version)
     end
 
